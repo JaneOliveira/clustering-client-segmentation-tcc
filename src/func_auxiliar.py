@@ -34,11 +34,20 @@ def generate_synthetic_blobs(
     X, labels = make_blobs(n_samples=n_samples, centers=centers, cluster_std=cluster_std, random_state=random_state)
     return X, labels
 
-def calculate_clustering_metrics(algorithm_name, metric_name, runtime, X, labels):
+def calculate_clustering_metrics(algorithm_name, metric_name, runtime, X, labels, eval_metric='euclidean', eval_kwargs=None):
+    """
+    Calcula as métricas de clusterização.
+    Agora aceita 'eval_metric' e 'eval_kwargs' para calcular o Silhouette correto.
+    """
+    if eval_kwargs is None:
+        eval_kwargs = {}
 
-    evaluator = EvaluationMetrics(X, labels, y_true=None)
+    # --- AQUI ESTÁ A CORREÇÃO ---
+    # Repassamos a métrica (eval_metric) e os argumentos extras (eval_kwargs) para a classe
+    evaluator = EvaluationMetrics(X, labels, y_true=None, metric=eval_metric, **eval_kwargs)
+    
     sse = evaluator.sse_euclidean()
-    sil = evaluator.silhouette()
+    sil = evaluator.silhouette()      # Agora vai usar a métrica correta internamente
     dbi = evaluator.davies_bouldin()
     ch = evaluator.calinski_harabasz()
 

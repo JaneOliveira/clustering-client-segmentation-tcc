@@ -7,58 +7,54 @@ from sklearn.metrics import (
     completeness_score,
     fowlkes_mallows_score,
 )
-from scipy.spatial.distance import cdist
-
+from scipy.spatial.distance import cdist, jensenshannon
 
 class EvaluationMetrics:
-    """
-    Classe para avaliação de resultados de clusterização.
-    Inclui métricas internas (sem rótulos verdadeiros) e externas (quando y_true é conhecido).
-    """
+    # ... (outros imports)
 
-    def __init__(self, X, labels, y_true=None):
+    def __init__(self, X, labels, y_true=None, metric='euclidean', **kwargs):
         """
-        Inicializa a classe com os dados e rótulos de cluster.
-
-        :param X: array-like, shape (n_samples, n_features)
-            Dados de entrada utilizados na clusterização.
-        :param labels: array-like, shape (n_samples,)
-            Rótulos atribuídos pelo algoritmo de clusterização.
-        :param y_true: array-like, shape (n_samples,), opcional
-            Rótulos verdadeiros (se disponíveis).
+        :param metric: A métrica (str ou callable).
+        :param kwargs: Parâmetros extras para a métrica (ex: V=VI para Mahalanobis).
         """
         self.X = np.asarray(X)
         self.labels = np.asarray(labels)
         self.y_true = np.asarray(y_true) if y_true is not None else None
-
-    # ---------------------- MÉTRICAS INTERNAS ----------------------
+        self.metric = metric
+        self.metric_params = kwargs  # <--- Guardamos os parâmetros extras aqui
 
     def silhouette(self):
-        """Retorna o coeficiente de silhueta (quanto maior, melhor)."""
         if len(set(self.labels)) < 2:
             return np.nan
-        return silhouette_score(self.X, self.labels)
+        try:
+            # Repassamos os parâmetros extras (como a matriz VI) para o score
+            return silhouette_score(self.X, self.labels, metric=self.metric, **self.metric_params)
+        except Exception as e:
+            print(f"Erro Silhouette: {e}")
+            return np.nan
 
     def davies_bouldin(self):
-        """Retorna o índice Davies-Bouldin (quanto menor, melhor)."""
+        """
+        Retorna o índice Davies-Bouldin.
+        Nota: O sklearn calcula isso sempre com distância Euclidiana por padrão.
+        """
         if len(set(self.labels)) < 2:
             return np.nan
         return davies_bouldin_score(self.X, self.labels)
 
     def calinski_harabasz(self):
-        """Retorna o índice Calinski-Harabasz (quanto maior, melhor)."""
+        """
+        Retorna o índice Calinski-Harabasz.
+        Nota: O sklearn calcula isso sempre com distância Euclidiana por padrão.
+        """
         if len(set(self.labels)) < 2:
             return np.nan
         return calinski_harabasz_score(self.X, self.labels)
     
     def sse_euclidean(self):
-        """
-        Calcula a Soma dos Erros Quadráticos Euclidianos (SSE) entre
-        cada ponto e o centróide do seu cluster.
-        """
-
+        """Calcula SSE (sempre Euclidiano pois depende do centróide médio)."""
         sse = 0.0
-        unique_labels = [k for k in np.unique(self.labels) if k != -1]  # ignora ruído se houver
+        unique_labels = [k for k in np.unique(self.labels) if k != -1]
 
         for k in unique_labels:
             cluster_points = self.X[self.labels == k]
@@ -68,52 +64,40 @@ class EvaluationMetrics:
             sse += np.sum((cluster_points - centroid) ** 2)
 
         return sse
-    # ---------------------- MÉTRICAS EXTERNAS ----------------------
 
+    # ---------------------- MÉTRICAS EXTERNAS ----------------------
+    # (Mantive igual, pois não dependem de distância, só dos rótulos)
+    
     def homogeneity(self):
-        """Homogeneidade (quanto maior, melhor)."""
-        if self.y_true is None:
-            return np.nan
+        if self.y_true is None: return np.nan
         return homogeneity_score(self.y_true, self.labels)
 
     def completeness(self):
-        """Completude (quanto maior, melhor)."""
-        if self.y_true is None:
-            return np.nan
+        if self.y_true is None: return np.nan
         return completeness_score(self.y_true, self.labels)
 
     def fowlkes_mallows(self):
-        """Índice Fowlkes-Mallows (quanto maior, melhor)."""
-        if self.y_true is None:
-            return np.nan
+        if self.y_true is None: return np.nan
         return fowlkes_mallows_score(self.y_true, self.labels)
 
-    # ---------------------- RESUMO GERAL ----------------------
+    # ---------------------- RESUMO ----------------------
 
     def summary(self):
-        """
-        Retorna um dicionário com as principais métricas calculadas.
-        Útil para comparação entre algoritmos.
-        """
         metrics = {
             "Silhouette": self.silhouette(),
             "Davies-Bouldin": self.davies_bouldin(),
             "Calinski-Harabasz": self.calinski_harabasz()
         }
-
-        # só calcula externas se y_true for fornecido
         if self.y_true is not None:
             metrics.update({
                 "Homogeneity": self.homogeneity(),
                 "Completeness": self.completeness(),
                 "Fowlkes-Mallows": self.fowlkes_mallows(),
             })
-
         return metrics
 
     def print_summary(self):
-        """Imprime o resumo formatado."""
         metrics = self.summary()
-        print("\n Avaliação de Clusterização:")
+        print(f"\n Avaliação de Clusterização (Métrica: {self.metric}):")
         for k, v in metrics.items():
             print(f" - {k:<20}: {v:.4f}" if not np.isnan(v) else f" - {k:<20}: N/A")
