@@ -1,0 +1,54 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches do pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Arquivos temporários
+*.swp
+*.tmp
+*.bak
+
+# Ambiente virtual
+venv/
+.env/
+.envrc
+.venv/
+
+# Notebooks com outputs salvos (opcional)
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+**/.ipynb_checkpoints/
+
+# Dados pesados
+data/raw/
+data/processed/
+*.csv
+*.xlsx
+*.json
+*.parquet
+
+# Resultados
+results/
+*.png
+*.jpg
+*.svg
+*.pdf
+
+# VS Code
+.vscode/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Arquivos compactados
+*.zip
+*.tar.gz
+
