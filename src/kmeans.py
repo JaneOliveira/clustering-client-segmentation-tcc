@@ -100,19 +100,29 @@ class KMeans:
 
     # -------------------------------------------------------------------------
     def update_centroids(self, data: np.ndarray, clusters: np.ndarray) -> np.ndarray:
-        """
-        Atualiza os centróides como a média dos pontos de cada cluster.
-        Reposiciona o centróide aleatoriamente caso o cluster fique vazio.
-        """
-        new_centroids = []
-        for k_idx in range(self.k):
-            cluster_points = data[clusters == k_idx]
-            if len(cluster_points) == 0:
-                # evita centróide "vazio"
-                new_centroids.append(data[np.random.randint(0, data.shape[0])])
-            else:
-                new_centroids.append(cluster_points.mean(axis=0))
-        return np.array(new_centroids)
+            """
+            Atualiza os centróides.
+            - Usa a MEDIANA se a métrica for Manhattan.
+            - Usa a MÉDIA para as outras métricas (Euclidiana = exato; JSD/Cosseno/Mahalanobis = heurística).
+            Reposiciona o centróide aleatoriamente caso o cluster fique vazio.
+            """
+            new_centroids = []
+            for k_idx in range(self.k):
+                cluster_points = data[clusters == k_idx]
+                
+                if len(cluster_points) == 0:
+                    # evita centróide "vazio"
+                    new_centroids.append(data[np.random.randint(0, data.shape[0])])
+                else:
+                    # --- AQUI ESTÁ A MUDANÇA ---
+                    if self.metric_name == 'manhattan_distance':
+                        # Para Manhattan, a Mediana minimiza o erro
+                        new_centroids.append(np.median(cluster_points, axis=0))
+                    else:
+                        # Para Euclidiana (e heurística das demais), usa-se a Média
+                        new_centroids.append(cluster_points.mean(axis=0))
+                        
+            return np.array(new_centroids)
 
     # -------------------------------------------------------------------------
     def calculate_sse(self, data: np.ndarray, clusters: np.ndarray) -> float:

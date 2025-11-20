@@ -60,7 +60,8 @@ def plot_algorithm_all_metrics(
     x_index=0,
     y_index=1,
     n_cols=3,
-    figsize=(16, 10)
+    figsize=(16, 10),
+    feature_names=None,
 ):
     """
     Gera uma figura ÚNICA com vários subplots,
@@ -140,8 +141,8 @@ def plot_algorithm_all_metrics(
                     )
 
         ax.set_title(f"Métrica: {metric_name}")
-        ax.set_xlabel(f"Feature {x_index}")
-        ax.set_ylabel(f"Feature {y_index}")
+        ax.set_xlabel(f"Feature {x_index} - {feature_names[x_index] if feature_names else ''}")
+        ax.set_ylabel(f"Feature {y_index} - {feature_names[y_index] if feature_names else ''}")
         ax.grid(True)
 
         handles, labels_legend = ax.get_legend_handles_labels()
